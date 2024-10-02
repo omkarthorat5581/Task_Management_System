@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager</title>
+    <script defer src="app.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        padding: 0;
+        margin: 0;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(
+            rgba(184, 156, 156, 0.8),
+            rgba(224, 157, 157, 0.8)
+          ),
+          url('https://c0.wallpaperflare.com/preview/389/615/630/business-businessman-communication-concept.jpg') no-repeat center center fixed;
+        background-blend-mode: hard-light;
+        background-size: cover;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .container {
+        background-color: rgba(255, 255, 255, 0.85);
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        width: 35%;
+        margin: 2rem auto;
+        padding: 2rem;
+      }
+
+      h3 {
+        text-align: center;
+        font-size: 1.5rem;
+        color: #495057;
+        margin-bottom: 1.5rem;
+      }
+
+      .err {
+        display: none;
+        padding: 0.75rem;
+        background-color: rgba(255, 99, 71, 0.3);
+        color: #d9534f;
+        border-radius: 5px;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      form {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+
+      #task-input {
+        width: 75%;
+        padding: 0.75rem;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        font-size: 1rem;
+      }
+
+      .add-btn {
+        width: 22%;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .add-btn:hover {
+        background-color: #218838;
+      }
+
+      #search {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin: 1rem 0;
+      }
+
+      .task-items {
+        list-style: none;
+        width: 100%;
+        padding: 0;
+      }
+
+      .task-items li {
+        background-color: #f8f9fa;
+        padding: 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        margin-bottom: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.3s ease;
+      }
+
+      .task-items li:hover {
+        background-color: #e9ecef;
+      }
+
+      .task-items li.done {
+        text-decoration: line-through;
+        background-color: #d4edda;
+        color: #155724;
+      }
+
+      .task-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .task-btn, .update-btn, .delete-btn, .clear-tasks {
+        border: none;
+        padding: 0.4rem;
+        border-radius: 3px;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .task-btn {
+        background-color: #28a745;
+      }
+
+      .update-btn {
+        background-color: #ffc107;
+      }
+
+      .delete-btn {
+        background-color: #dc3545;
+      }
+
+      .clear-tasks {
+        width: 100%;
+        background-color: #dc3545;
+        color: white;
+        padding: 0.75rem;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        margin-top: 1rem;
+      }
+
+      .task-btn:hover, .update-btn:hover, .delete-btn:hover, .clear-tasks:hover {
+        background-color: #218838; /* Default hover */
+      }
+
+      .update-btn:hover {
+        background-color: #e0a800;
+      }
+
+      .delete-btn:hover {
+        background-color: #c82333;
+      }
+
+      /* Progress bar styles */
+      .progress-container {
+        width: 100%;
+        background-color: #e0e0e0;
+        border-radius: 5px;
+        overflow: hidden;
+        margin: 1rem 0;
+      }
+
+      .progress-bar {
+        height: 10px;
+        width: 0;
+        background-color: #28a745;
+        transition: width 0.5s;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h3>Task Manager</h3>
+      <p class="err">Please enter a task</p>
+      <form>
+        <input id="task-input" type="text" placeholder="Add a task" />
+        <button class="add-btn" type="button" onclick="addTask()">Add task</button>
+      </form>
+      <input type="text" id="search" placeholder="Search a task" onkeyup="searchTasks()" />
+      
+      <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      
+      <ul class="task-items"></ul>
+      <button class="clear-tasks" onclick="clearTasks()">Clear All Tasks</button>
+    </div>
+
+    <script>
+      let totalTasks = 0;
+      let completedTasks = 0;
+
+      // Add task function
+      function addTask() {
+        const taskInput = document.getElementById("task-input").value;
+        const taskList = document.querySelector(".task-items");
+        const errorMessage = document.querySelector(".err");
+
+        if (taskInput === "") {
+          errorMessage.style.display = "block";
+          errorMessage.textContent = "Please enter a task!";
+        } else {
+          errorMessage.style.display = "none";
+          totalTasks++; // Increase total tasks
+
+          // Create a new task item
+          const li = document.createElement("li");
+
+          // Add task text
+          li.innerHTML = `
+            <span class="task-text">${taskInput}</span>
+            <div class="task-actions">
+              <button class="task-btn" onclick="markDone(this)">Done</button>
+              <button class="update-btn" onclick="updateTask(this)">Update</button>
+              <button class="delete-btn" onclick="deleteTask(this)">Delete</button>
+            </div>
+          `;
+
+          taskList.appendChild(li);
+          document.getElementById("task-input").value = ""; // Clear the input after adding
+          updateProgressBar(); // Update the progress bar
+        }
+      }
+
+      // Mark task as done
+      function markDone(button) {
+        const taskItem = button.closest("li");
+        const taskText = taskItem.querySelector(".task-text");
+
+        if (!taskItem.classList.toggle("done")) {
+          completedTasks--; // Decrement if unmarked
+        } else {
+          completedTasks++; // Increment if marked done
+        }
+
+        updateProgressBar(); // Update the progress bar
+      }
+
+      // Update task function
+      function updateTask(button) {
+        const taskItem = button.closest("li");
+        const taskText = taskItem.querySelector(".task-text");
+
+        // Prompt the user to input the new task text
+        const newTaskText = prompt("Update your task:", taskText.textContent);
+        if (newTaskText !== null && newTaskText.trim() !== "") {
+          taskText.textContent = newTaskText;
+        }
+      }
+
+      // Delete task
+      function deleteTask(button) {
+        const taskItem = button.closest("li");
+        if (!taskItem.classList.contains("done")) {
+          totalTasks--; // Decrease total tasks if not done
+        } else {
+          completedTasks--; // Decrease completed tasks if done
+        }
+        taskItem.remove();
+        updateProgressBar(); // Update the progress bar
+      }
+
+      // Clear all tasks
+      function clearTasks() {
+        const taskList = document.querySelector(".task-items");
+        taskList.innerHTML = "";
+        totalTasks = 0; // Reset total tasks
+        completedTasks = 0; // Reset completed tasks
+        updateProgressBar(); // Update the progress bar
+      }
+
+      // Update the progress bar based on task completion
+      function updateProgressBar() {
+        const progressBar = document.getElementById("progress-bar");
+        const percentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+        progressBar.style.width = percentage + "%";
+      }
+
+      // Search tasks
+      function searchTasks() {
+        const searchInput = document.getElementById("search").value.toLowerCase();
+        const tasks = document.querySelectorAll(".task-items li");
+
+        tasks.forEach((task) => {
+          const taskText = task.querySelector(".task-text").textContent.toLowerCase();
+          if (taskText.includes(searchInput)) {
+            task.style.display = ""; // Show the task
+          } else {
+            task.style.display = "none"; // Hide the task
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
